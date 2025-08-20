@@ -386,6 +386,7 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
         self.watcher_thread.start()
         self.prefill_model_labels = prefill_model_labels
         self.decode_model_labels = decode_model_labels
+        self.failing_counter = 0
 
     @staticmethod
     def _check_pod_ready(container_statuses):
@@ -502,7 +503,12 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
         url = f"http://{pod_ip}:{self.port}/v1/models"
         try:
             headers = None
+            self.failing_counter +=1
+            logger.info(f"{self.failing_counter=}")
             if VLLM_API_KEY := os.getenv("VLLM_API_KEY"):
+                if self.failing_counter > 3:
+                    time.sleep(60)
+                    VLLM_API_KEY = "wrong_key_jklkjlkj"
                 logger.info("Using vllm server authentication")
                 headers = {"Authorization": f"Bearer {VLLM_API_KEY}"}
             response = requests.get(url, headers=headers)
@@ -570,16 +576,22 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
 
         while self.running:
             try:
+                logger.info(f"K8s watcher started{self.get_endpoint_info()}")
+                logger.info("time out is 30")
+                logger.info("Jon latest version v2")
                 for event in self.k8s_watcher.stream(
                     self.k8s_api.list_namespaced_pod,
                     namespace=self.namespace,
                     label_selector=self.label_selector,
                     timeout_seconds=30,
                 ):
+                    
                     pod = event["object"]
                     event_type = event["type"]
                     pod_name = pod.metadata.name
                     pod_ip = pod.status.pod_ip
+
+                    logger.info(f"pod_name: {pod_name} pod_ip: {pod_ip} event_type: {event_type}")
 
                     # Check if pod is terminating
                     is_pod_terminating = self._is_pod_terminating(pod)

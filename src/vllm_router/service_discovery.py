@@ -507,7 +507,7 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
             logger.info(f"{self.failing_counter=}")
             if VLLM_API_KEY := os.getenv("VLLM_API_KEY"):
                 if self.failing_counter > 3:
-                    time.sleep(60)
+                    await asyncio.sleep(60)
                     VLLM_API_KEY = "wrong_key_jklkjlkj"
                 logger.info("Using vllm server authentication")
                 headers = {"Authorization": f"Bearer {VLLM_API_KEY}"}

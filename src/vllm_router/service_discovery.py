@@ -393,7 +393,8 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
         self.watcher_thread.start()
         self.prefill_model_labels = prefill_model_labels
         self.decode_model_labels = decode_model_labels
-        self.failing_counter = 0
+        self.failing_counter = 0 # TODO: remove when implementation works
+        self.use_ressource_version = False # TODO: remove when implementation works
 
     @staticmethod
     def _check_pod_ready(container_statuses):
@@ -606,13 +607,16 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
                     "label_selector": self.label_selector,
                     "timeout_seconds": 30,
                 }
-                if self.resource_version:
+                if self.resource_version and self.use_ressource_version:
                     watch_params["resource_version"] = self.resource_version
-                
+
+
+                logger.debug(f"{watch_params=}")
                 for event in self.k8s_watcher.stream(
                     self.k8s_api.list_namespaced_pod,
                     **watch_params
                 ):
+                    logger.debug(f"Watching pod {event["object"].metadata.name} as event type: {event['type']}")
                     # Update resource version
                     self.resource_version = event["object"].metadata.resource_version
 

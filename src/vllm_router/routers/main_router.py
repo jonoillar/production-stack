@@ -210,10 +210,12 @@ async def health() -> Response:
     """
 
     if not get_service_discovery().get_health():
+        logger.debug("SERVICE DISCOVERY DOWN")
         return JSONResponse(
             content={"status": "Service discovery module is down."}, status_code=503
         )
     if not get_engine_stats_scraper().get_health():
+        logger.debug("STAT SCRAPER DOWN")
         return JSONResponse(
             content={"status": "Engine stats scraper is down."}, status_code=503
         )

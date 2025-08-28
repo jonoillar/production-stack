@@ -579,6 +579,7 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
     def _watch_engines(self):
         while self.running:
             try:
+                logger.debug(f"K8s watcher started{self.get_endpoint_info()}")
                 for event in self.k8s_watcher.stream(
                     self.k8s_api.list_namespaced_pod,
                     namespace=self.namespace,
@@ -589,6 +590,7 @@ class K8sPodIPServiceDiscovery(ServiceDiscovery):
                     event_type = event["type"]
                     pod_name = pod.metadata.name
                     pod_ip = pod.status.pod_ip
+                    logger.debug(f"Processing event: pod_name: {pod_name} pod_ip: {pod_ip} event_type: {event_type}")
 
                     if event_type == "DELETED":
                         if pod_name in self.available_engines:
